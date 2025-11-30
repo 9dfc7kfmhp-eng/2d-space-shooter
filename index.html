@@ -93,6 +93,17 @@
             font-size: 24px;
             margin-top: 20px;
         }
+
+        #credits {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #00ff00;
+            font-size: 16px;
+            text-shadow: 0 0 10px #00ff00;
+            z-index: 10;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -115,6 +126,10 @@
 
     <div id="instructions">
         Steuerung: WASD / Pfeiltasten | Schießen: LEERTASTE | Pause: P / ESC
+    </div>
+
+    <div id="credits">
+        Created by Basti
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

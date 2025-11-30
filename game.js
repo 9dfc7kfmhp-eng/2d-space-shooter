@@ -826,7 +826,15 @@ function togglePause() {
 }
 
 // Event listeners
+let musicStarted = false;
+
 document.addEventListener('keydown', (e) => {
+    // Start music on first keypress (browser requirement)
+    if (!musicStarted) {
+        musicStarted = true;
+        music.start();
+    }
+
     // Pause toggle (P or ESC)
     if ((e.key.toLowerCase() === 'p' || e.key === 'Escape') && !gameState.isGameOver) {
         e.preventDefault();
@@ -1065,9 +1073,3 @@ function animate() {
 // Start game
 updateUI();
 animate();
-
-// Start background music after user interaction (required by browsers)
-document.addEventListener('keydown', function startMusic() {
-    music.start();
-    document.removeEventListener('keydown', startMusic);
-}, { once: true });
