@@ -128,6 +128,7 @@ const music = {
     arpGain: null,
     drumGain: null,
     loopTimeout: null,
+    activeOscillators: [], // Track all active oscillators
     bpm: 170, // Faster tempo
     beatDuration: 60 / 170,
 
@@ -272,6 +273,17 @@ const music = {
 
         osc.start(startTime);
         osc.stop(startTime + duration);
+
+        // Track oscillator for cleanup
+        this.activeOscillators.push(osc);
+
+        // Auto-remove from tracking after it stops
+        setTimeout(() => {
+            const index = this.activeOscillators.indexOf(osc);
+            if (index > -1) {
+                this.activeOscillators.splice(index, 1);
+            }
+        }, (startTime - audioContext.currentTime + duration) * 1000);
     },
 
     playDrum: function(frequency, startTime, duration) {
@@ -291,12 +303,24 @@ const music = {
 
         osc.start(startTime);
         osc.stop(startTime + duration);
+
+        // Track oscillator for cleanup
+        this.activeOscillators.push(osc);
+
+        // Auto-remove from tracking after it stops
+        setTimeout(() => {
+            const index = this.activeOscillators.indexOf(osc);
+            if (index > -1) {
+                this.activeOscillators.splice(index, 1);
+            }
+        }, (startTime - audioContext.currentTime + duration) * 1000);
     },
 
     playSequence: function() {
         if (this.isPaused) return;
 
-        const now = audioContext.currentTime;
+        // Add small offset to ensure all notes are scheduled in the future
+        const now = audioContext.currentTime + 0.05;
         const loopDuration = 16 * this.beatDuration;
 
         // Play melody
@@ -363,15 +387,28 @@ const music = {
 
     pause: function() {
         this.isPaused = true;
+
+        // Stop timeout
         if (this.loopTimeout) {
             clearTimeout(this.loopTimeout);
             this.loopTimeout = null;
         }
+
+        // Stop all active oscillators to prevent layering
+        this.activeOscillators.forEach(osc => {
+            try {
+                osc.stop();
+            } catch (e) {
+                // Oscillator might already be stopped
+            }
+        });
+        this.activeOscillators = [];
     },
 
     resume: function() {
         if (this.isPaused && this.isPlaying) {
             this.isPaused = false;
+            // Start fresh sequence
             this.playSequence();
         }
     },
@@ -379,10 +416,22 @@ const music = {
     stop: function() {
         this.isPlaying = false;
         this.isPaused = false;
+
+        // Stop timeout
         if (this.loopTimeout) {
             clearTimeout(this.loopTimeout);
             this.loopTimeout = null;
         }
+
+        // Stop all active oscillators
+        this.activeOscillators.forEach(osc => {
+            try {
+                osc.stop();
+            } catch (e) {
+                // Oscillator might already be stopped
+            }
+        });
+        this.activeOscillators = [];
     },
 
     setVolume: function(volume) {
@@ -832,7 +881,15 @@ document.addEventListener('keydown', (e) => {
     // Start music on first keypress (browser requirement)
     if (!musicStarted) {
         musicStarted = true;
-        music.start();
+        // Ensure AudioContext is running before starting music
+        audioContext.resume().then(() => {
+            // Small delay to ensure AudioContext is fully ready
+            setTimeout(() => {
+                if (audioContext.state === 'running') {
+                    music.start();
+                }
+            }, 50);
+        });
     }
 
     // Pause toggle (P or ESC)
