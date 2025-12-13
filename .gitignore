@@ -32,3 +32,18 @@ Temporary Items
 # Logs
 *.log
 npm-debug.log*
+
+# Environment variables and secrets
+.env*
+.env.local
+.env.production
+
+# Secrets and keys
+secrets/
+*.key
+*.pem
+.credentials/
+
+# Local settings
+.claude/settings.local.json
+.trees/
